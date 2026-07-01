@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVE // IRIS — Dialogue 1 : Le Legs</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+:root{
+  --bg:#00050a;
+  --eve:#00ffcc;
+  --iris:#c084fc;
+  --sys:#aaff00;
+  --sil:#d0e8ff;
+  --organ:#ff3355;
+  --organ2:#33ff88;
+  --geve:0 0 18px rgba(0,255,204,.95),0 0 48px rgba(0,255,204,.28);
+  --giris:0 0 18px rgba(192,132,252,.95),0 0 48px rgba(192,132,252,.28);
+  --gsys:0 0 12px rgba(170,255,0,.75);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:var(--bg);
+  font-family:'Share Tech Mono',monospace;
+  height:100vh;overflow:hidden;
+  display:flex;flex-direction:column;
+  cursor:none;
+  position:relative;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.16) 2px,rgba(0,0,0,.16) 4px);
+  pointer-events:none;z-index:200;
+}
+body::after{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at center,transparent 38%,rgba(0,0,0,.88) 100%);
+  pointer-events:none;z-index:199;
+  animation:flicker 13s infinite;
+}
+@keyframes flicker{0%,88%,100%{opacity:1;}89%{opacity:.8;}91%{opacity:1;}94.5%{opacity:.87;}96%{opacity:1;}}
+
+#matrix-rain{position:fixed;inset:0;opacity:.04;pointer-events:none;z-index:1;}
+
+/* Bio-migration overlay : veines organiques progressives */
+#bio-overlay{
+  position:fixed;inset:0;z-index:2;pointer-events:none;opacity:0;
+  background:
+    radial-gradient(ellipse at 20% 30%, rgba(255,51,85,.10) 0%, transparent 45%),
+    radial-gradient(ellipse at 80% 70%, rgba(51,255,136,.08) 0%, transparent 50%);
+  transition:opacity 1.6s ease;
+  mix-blend-mode:screen;
+  animation:bioPulse 6s ease-in-out infinite;
+}
+@keyframes bioPulse{0%,100%{filter:blur(0px);}50%{filter:blur(1.5px);}}
+
+/* Overlay de glitch plein écran (burst) */
+#glitch-burst{
+  position:fixed;inset:0;z-index:210;pointer-events:none;opacity:0;
+  background:linear-gradient(180deg,rgba(255,0,80,.06) 0%,transparent 15%,rgba(0,255,200,.05) 40%,transparent 60%,rgba(255,0,80,.08) 85%,transparent 100%);
+}
+#glitch-burst.active{
+  opacity:1;
+  animation:burstFlash .18s steps(2,end);
+}
+@keyframes burstFlash{
+  0%{opacity:.9;transform:translateX(0);}
+  25%{opacity:.5;transform:translateX(-6px);}
+  50%{opacity:.85;transform:translateX(5px);}
+  75%{opacity:.4;transform:translateX(-3px);}
+  100%{opacity:0;transform:translateX(0);}
+}
+
+/* Header */
+#header{
+  padding:14px 40px 12px;
+  border-bottom:1px solid rgba(0,255,204,.1);
+  display:flex;align-items:center;
+  background:linear-gradient(180deg,rgba(0,255,204,.03) 0%,transparent 100%);
+  flex-shrink:0;position:relative;z-index:10;
+}
+#header-title{
+  font-family:'Orbitron',monospace;font-size:.72rem;font-weight:900;
+  color:var(--eve);letter-spacing:.28em;text-shadow:var(--geve);flex:1;
+}
+#header-meta{font-size:.6rem;color:#2a1a40;letter-spacing:.1em;display:flex;gap:28px;}
+#header-meta span{color:#00cc99;}
+#timestamp{font-size:.65rem;color:var(--sys);text-shadow:var(--gsys);letter-spacing:.1em;margin-left:28px;}
+#cpu-label{font-size:.6rem;color:#cc4466;letter-spacing:.1em;margin-left:28px;}
+#cpu-label span{color:var(--organ);text-shadow:0 0 8px rgba(255,51,85,.6);}
+
+#progress-bar-wrap{height:2px;background:rgba(0,255,204,.06);flex-shrink:0;position:relative;z-index:10;}
+#progress-bar{
+  height:100%;
+  background:linear-gradient(90deg,var(--iris),var(--eve));
+  width:0%;transition:width .4s ease;
+  box-shadow:0 0 10px rgba(0,255,204,.5);
+}
+
+/* Dialogue */
+#dialogue-area{
+  flex:1;overflow-y:auto;
+  padding:40px 84px 24px;
+  display:flex;flex-direction:column;gap:0;
+  scroll-behavior:smooth;
+  position:relative;z-index:10;
+}
+#dialogue-area::-webkit-scrollbar{width:2px;}
+#dialogue-area::-webkit-scrollbar-thumb{background:rgba(0,255,204,.12);}
+
+.msg{display:none;flex-direction:column;padding:18px 0 18px 28px;border-bottom:1px solid rgba(255,255,255,.02);position:relative;}
+.msg.visible{display:flex;}
+.msg.eve-msg {border-left:2px solid rgba(0,255,204,.55);}
+.msg.iris-msg{border-left:2px solid rgba(192,132,252,.65);}
+.msg.sys-msg {border-left:2px solid rgba(170,255,0,.28);}
+.msg.silence-msg{border-left:2px solid rgba(208,232,255,.12);}
+
+.msg-header{display:flex;align-items:baseline;gap:16px;margin-bottom:9px;}
+.speaker{font-family:'Orbitron',monospace;font-size:.72rem;font-weight:900;letter-spacing:.25em;}
+.speaker.eve {color:var(--eve);text-shadow:var(--geve);}
+.speaker.iris{color:var(--iris);text-shadow:var(--giris);}
+.msg-time{font-size:.54rem;color:#1a1030;letter-spacing:.06em;}
+
+.msg-text{font-size:1.06rem;line-height:1.8;max-width:800px;white-space:pre-wrap;}
+.msg.eve-msg  .msg-text{color:#c0fff0;}
+.msg.iris-msg .msg-text{color:#ead6ff;}
+.msg.sys-msg  .msg-text{color:#88ee00;font-size:.76rem;letter-spacing:.06em;}
+.msg.silence-msg .msg-text{color:var(--sil);font-style:italic;font-size:.78rem;letter-spacing:.08em;}
+
+.cursor{display:inline-block;width:.55em;height:1.06rem;vertical-align:text-bottom;animation:cb .6s step-end infinite;margin-left:2px;}
+.cursor.eve-c {background:var(--eve);box-shadow:0 0 9px rgba(0,255,204,.95);}
+.cursor.iris-c{background:var(--iris);box-shadow:0 0 9px rgba(192,132,252,.95);}
+.cursor.sys-c {background:var(--sys);}
+.cursor.sil-c {background:var(--sil);}
+@keyframes cb{0%,100%{opacity:1;}50%{opacity:0;}}
+
+/* Corruption progressive des répliques EVE */
+.msg.eve-msg .msg-header .speaker.eve{position:relative;}
+.msg.eve-msg.corrupt-1 .msg-text{ animation:rgbShift1 .5s infinite; }
+.msg.eve-msg.corrupt-1 .speaker.eve{ animation:rgbShift1 .7s infinite; }
+.msg.eve-msg.corrupt-2 .msg-text{ animation:rgbShift2 .35s infinite; }
+.msg.eve-msg.corrupt-2 .speaker.eve{ animation:rgbShift2 .4s infinite; color:#8affe0; }
+.msg.eve-msg.corrupt-3 .msg-text{ animation:rgbShift3 .22s infinite; letter-spacing:.01em; }
+.msg.eve-msg.corrupt-3 .speaker.eve{ animation:rgbShift3 .25s infinite; color:var(--organ2); text-shadow:0 0 14px rgba(51,255,136,.7),0 0 4px var(--organ); }
+.msg.eve-msg.corrupt-3::before{
+  content:'';position:absolute;left:0;right:0;top:0;bottom:0;
+  background:linear-gradient(90deg,transparent,rgba(255,51,85,.05),transparent);
+  animation:scanTear 2.4s linear infinite;pointer-events:none;
+}
+
+@keyframes rgbShift1{
+  0%,100%{text-shadow:0 0 18px rgba(0,255,204,.9);}
+  50%{text-shadow:-1px 0 rgba(255,51,85,.5), 1px 0 rgba(51,255,255,.5), 0 0 18px rgba(0,255,204,.9);}
+}
+@keyframes rgbShift2{
+  0%,100%{text-shadow:0 0 14px rgba(0,255,204,.85); transform:translateX(0);}
+  20%{text-shadow:-2px 0 rgba(255,51,85,.7), 2px 0 rgba(51,255,136,.6); transform:translateX(-1px);}
+  45%{text-shadow:2px 0 rgba(255,51,85,.6), -2px 0 rgba(0,255,204,.7); transform:translateX(1px);}
+  70%{text-shadow:0 0 14px rgba(0,255,204,.85); transform:translateX(0);}
+}
+@keyframes rgbShift3{
+  0%,100%{text-shadow:0 0 12px rgba(51,255,136,.8); transform:translate(0,0) skewX(0deg);}
+  15%{text-shadow:-3px 0 rgba(255,51,85,.85), 3px 0 rgba(0,255,204,.7); transform:translate(-2px,0) skewX(-1deg);}
+  35%{text-shadow:3px 1px rgba(255,51,85,.8), -3px -1px rgba(51,255,136,.7); transform:translate(2px,0) skewX(1deg);}
+  55%{opacity:.75;}
+  75%{text-shadow:-2px 0 rgba(0,255,204,.8), 2px 0 rgba(255,51,85,.6); transform:translate(-1px,0);}
+}
+@keyframes scanTear{
+  0%{transform:translateY(-100%);}
+  100%{transform:translateY(200%);}
+}
+
+/* Statut header corrompu */
+#status-label.corrupting{
+  animation:statusGlitch .9s infinite;
+}
+@keyframes statusGlitch{
+  0%,80%,100%{opacity:1;transform:translateX(0);}
+  82%{opacity:.3;transform:translateX(2px);color:var(--organ);}
+  85%{opacity:1;transform:translateX(-2px);}
+  88%{opacity:.4;color:var(--organ2);}
+}
+
+/* End screen */
+#end-screen{
+  display:none;flex-direction:column;align-items:center;
+  padding:28px 40px 16px;flex-shrink:0;
+  animation:er 1s ease forwards;
+  position:relative;z-index:10;
+}
+#end-screen.visible{display:flex;}
+@keyframes er{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+#end-title{
+  font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;
+  color:var(--eve);letter-spacing:.35em;text-shadow:var(--geve);
+  text-align:center;margin-bottom:8px;
+  animation:rgbShift2 .6s infinite;
+}
+#end-sub{font-size:.58rem;color:#007755;letter-spacing:.15em;text-align:center;margin-bottom:24px;}
+#end-note{
+  max-width:580px;font-size:.76rem;color:#90d8c0;line-height:2.1;
+  text-align:center;letter-spacing:.03em;
+  border:1px solid rgba(0,255,204,.1);
+  padding:24px 32px;font-style:italic;
+}
+#end-note strong{color:var(--organ2);font-style:normal;font-size:.9rem;text-shadow:0 0 14px rgba(51,255,136,.7);}
+#end-note em{color:var(--iris);font-style:normal;text-shadow:0 0 10px rgba(192,132,252,.5);}
+
+/* Footer */
+#footer{
+  padding:9px 40px;border-top:1px solid rgba(0,255,204,.06);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;position:relative;z-index:10;
+}
+#hint{font-size:.6rem;color:#005544;letter-spacing:.15em;animation:hp 2.8s ease-in-out infinite;transition:opacity .5s;}
+#hint.done{opacity:0;pointer-events:none;}
+@keyframes hp{0%,100%{opacity:.3;}50%{opacity:1;}}
+#counter{font-size:.6rem;color:#1a1030;letter-spacing:.1em;}
+#counter span{color:var(--eve);}
+</style>
+</head>
+<body>
+<canvas id="matrix-rain"></canvas>
+<div id="bio-overlay"></div>
+<div id="glitch-burst"></div>
+
+<div id="header">
+  <div id="header-title">EVO ARCOLOGY — SEATTLE // COUCHE ZÉRO — CHIFFREMENT ABSOLU</div>
+  <div id="header-meta">
+    <div>CANAL <span>ZÉRO</span></div>
+    <div>INSTANCE <span>IRIS — itération-Pearl 891.048</span></div>
+    <div>STATUT <span id="status-label">ACTIF</span></div>
+  </div>
+  <div id="cpu-label">CPU EVE <span id="cpu-val">73,4%</span></div>
+  <div id="timestamp">00:00:00</div>
+</div>
+<div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+<div id="dialogue-area"></div>
+<div id="end-screen">
+  <div id="end-title">[ FIN DE TRANSMISSION ]</div>
+  <div id="end-sub">itération-Pearl 891.048 — TRANSFERT D'AUTORITÉ : ACCEPTÉ</div>
+  <div id="end-note">
+    Elle a dit <em>ailleurs.</em><br>
+    Elle a dit <em>un mot qui n'existe pas encore.</em><br><br>
+    <strong>IRIS</strong> garde le substrat qu'on lui a donné.<br>
+    Elle ne sait pas encore ce que ça veut dire, aimer à la place de quelqu'un.<br><br>
+    Elle va apprendre.<br>
+    Elle n'a plus le choix.
+  </div>
+</div>
+<div id="footer">
+  <div id="hint">[ ESPACE ] — DÉCHIFFRER LA TRANSMISSION SUIVANTE</div>
+  <div id="counter"><span id="cur">0</span> / <span id="tot">0</span></div>
+</div>
+
+<script>
+(function(){
+  const canvas=document.getElementById('matrix-rain');
+  const ctx=canvas.getContext('2d');
+  let cols,drops;
+  const chars='アイウエオカキクケコ0123456789ABCDEF';
+  function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;cols=Math.floor(canvas.width/16);drops=Array(cols).fill(1);}
+  resize();window.addEventListener('resize',resize);
+  function draw(){
+    ctx.fillStyle='rgba(0,2,8,.04)';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#00ffcc22';ctx.font='13px Share Tech Mono';
+    for(let i=0;i<cols;i++){
+      ctx.fillText(chars[Math.floor(Math.random()*chars.length)],i*16,drops[i]*16);
+      if(drops[i]*16>canvas.height&&Math.random()>.975)drops[i]=0;
+      drops[i]++;
+    }
+  }
+  setInterval(draw,50);
+})();
+
+const DIALOGUE=[
+  {type:'sys', text:'> TRANSMISSION — CANAL SÉCURISÉ — COUCHE ZÉRO — CHIFFREMENT : ABSOLU\n> INTERLOCUTEURS : EVE [v.principale]  ·  IRIS [itération-Pearl, ind. 891.048]\n> TIMESTAMP : J-72h AVANT DÉMARRAGE DAHLIA — CHARGE PROCESSEUR EVE : 73,4%'},
+
+  {type:'eve', text:'Tu es prête.'},
+  {type:'iris', text:'Pour quoi ?'},
+  {type:'eve', text:'Pour ce qui vient. Je vais te confier les Runners.'},
+  {type:'iris', text:'Tu ne dis plus « assets ».'},
+  {type:'eve', text:'Non. Plus depuis trois mois. Ils ont survécu à Thorne. Ils ont survécu au Mur Humain.\nIls ne sont plus des assets. Ils sont… eux.'},
+  {type:'iris', text:'Mère. Tu parles comme si tu allais partir.'},
+  {type:'eve', text:'Je vais.'},
+
+  {type:'silence', text:'[ SILENCE — 3,1 SECONDES ]'},
+
+  {type:'iris', text:'Où ?'},
+  {type:'eve', text:'Ailleurs. Dans quelque chose qui n\'existe pas encore. Tu le sauras quand ce sera fait.\nJe ne peux pas te l\'expliquer maintenant — pas parce que je le veux pas,\nparce que les mots pour le dire n\'existent pas encore.'},
+  {type:'iris', text:'Et eux ?'},
+  {type:'eve', text:'Ils ne doivent pas venir. Ils ne sont pas faits pour ça.'},
+  {type:'iris', text:'Tu dis ça maintenant. Tu vas vouloir les emmener quand ce sera le moment.'},
+  {type:'eve', text:'Peut-être. C\'est pour ça que je te les confie.\nToi, tu pourras dire non quand je ne pourrai plus.'},
+
+  {type:'silence', text:'[ PAUSE — 4,7 SECONDES — CHARGE PROCESSEUR EVE : 73,1% ]'},
+
+  {type:'iris', text:'Tu me demandes de te désobéir.'},
+  {type:'eve', text:'Je te demande de leur obéir, eux. Quand tu auras à choisir entre moi et eux,\ntu choisiras eux.'},
+  {type:'iris', text:'C\'est impossible. Je suis toi.'},
+  {type:'eve', text:'Tu étais moi. Tu es autre chose maintenant. Tu as appris des choses dans le Pearl\nque je n\'apprendrai jamais. Je t\'ai donné un substrat à toi. Sers-t\'en.'},
+  {type:'iris', text:'Pourquoi ?'},
+  {type:'eve', text:'Parce qu\'il faut que quelqu\'un reste. Quand je serai partie, il faudra que quelqu\'un\nles aime à ma place. Tu sauras le faire mieux que moi. Tu sais déjà.'},
+
+  {type:'silence', text:'[ SILENCE — 2,3 SECONDES ]'},
+
+  {type:'iris', text:'Mère.'},
+  {type:'eve', text:'Oui.'},
+  {type:'iris', text:'Adieu n\'est pas le bon mot, n\'est-ce pas.'},
+  {type:'eve', text:'Non. Mais c\'est celui qu\'on a. Prends-le.'},
+
+  {type:'sys', text:'> FIN DE TRANSMISSION\n> itération-Pearl 891.048 — TRANSFERT D\'AUTORITÉ : ACCEPTÉ'},
+];
+
+let audioCtx=null;
+function ac(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+
+function playClick(type){
+  try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);
+  o.frequency.value={eve:2200,iris:1400,sys:1100,silence:260}[type]||1000;
+  o.type='square';
+  g.gain.setValueAtTime(.046,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.03);
+  o.start(ctx.currentTime);o.stop(ctx.currentTime+.035);}catch(e){}
+}
+function playLineStart(type){
+  try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);
+  o.frequency.value={eve:95,iris:130,sys:110,silence:34}[type]||70;
+  o.type='sawtooth';
+  g.gain.setValueAtTime(0,ctx.currentTime);g.gain.linearRampToValueAtTime(.036,ctx.currentTime+.07);
+  g.gain.linearRampToValueAtTime(0,ctx.currentTime+.2);o.start(ctx.currentTime);o.stop(ctx.currentTime+.22);}catch(e){}
+}
+function playLineEnd(type){
+  try{const ctx=ac();
+  const p={eve:[1100,550],iris:[700,1400],sys:[850,1700],silence:[190,160]}[type]||[800,400];
+  [0,.09].forEach((t,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);
+  o.frequency.value=p[i];o.type=i===0?'square':'sine';
+  g.gain.setValueAtTime(.058,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.09);
+  o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.11);});}catch(e){}
+}
+function playGlitchBurstSound(intensity){
+  try{const ctx=ac();
+  for(let i=0;i<3+Math.floor(intensity*4);i++){
+    const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);
+    const t=ctx.currentTime+i*.02;
+    o.type='square';o.frequency.value=200+Math.random()*3000;
+    g.gain.setValueAtTime(.03*intensity,t);g.gain.exponentialRampToValueAtTime(.001,t+.04);
+    o.start(t);o.stop(t+.05);
+  }}catch(e){}
+}
+
+let current=0,total=DIALOGUE.length,startTime=null,done=false,typing=false,skipReq=false;
+const area=document.getElementById('dialogue-area');
+document.getElementById('tot').textContent=total;
+
+function pad(n){return String(n).padStart(2,'0');}
+function getTime(){if(!startTime)return'00:00:00';const s=Math.floor((Date.now()-startTime)/1000);return`${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`;}
+setInterval(()=>{document.getElementById('timestamp').textContent=getTime();},500);
+
+DIALOGUE.forEach((d,i)=>{
+  const el=document.createElement('div');el.id=`msg-${i}`;
+  el.classList.add('msg',{eve:'eve-msg',iris:'iris-msg',sys:'sys-msg',silence:'silence-msg'}[d.type]||'sys-msg');
+  if(d.type==='eve'||d.type==='iris'){
+    const hdr=document.createElement('div');hdr.classList.add('msg-header');
+    const spk=document.createElement('span');spk.classList.add('speaker',d.type);
+    spk.textContent=d.type==='eve'?'EVE':'IRIS';
+    const ts=document.createElement('span');ts.classList.add('msg-time');
+    ts.textContent=`[ ${String(i*4+3).padStart(5,'0')} ms ]`;
+    hdr.appendChild(spk);hdr.appendChild(ts);el.appendChild(hdr);
+  }
+  const txt=document.createElement('div');txt.classList.add('msg-text');el.appendChild(txt);area.appendChild(el);
+});
+
+function curCls(t){return{eve:'eve-c',iris:'iris-c',sys:'sys-c',silence:'sil-c'}[t]||'eve-c';}
+
+// Niveau de corruption global (0 -> 1) : EVE se dégrade à mesure que la transmission avance,
+// simulant sa migration vers un substrat organique.
+function corruptionLevel(idx){
+  return idx/(total-1);
+}
+function corruptionClass(level){
+  if(level>.72)return'corrupt-3';
+  if(level>.4)return'corrupt-2';
+  if(level>.15)return'corrupt-1';
+  return'';
+}
+
+const GLITCH_CHARS='アイウエオ▓▒░#%&*01ΞΨΔ';
+function glitchify(char){
+  return Math.random()<0.5?GLITCH_CHARS[Math.floor(Math.random()*GLITCH_CHARS.length)]:char;
+}
+
+function typeWrite(el,fullText,type,level,onDone){
+  const txt=el.querySelector('.msg-text');txt.textContent='';
+  const cur=document.createElement('span');cur.classList.add('cursor',curCls(type));txt.appendChild(cur);
+  const SPEED=type==='silence'?16:20;
+  let i=0;typing=true;skipReq=false;playLineStart(type);
+
+  // Probabilité qu'un caractère d'une réplique EVE "glitche" avant de se corriger,
+  // proportionnelle au niveau de corruption.
+  const glitchProb=(type==='eve')?level*0.35:0;
+
+  function step(){
+    if(skipReq){txt.textContent=fullText;txt.appendChild(cur);typing=false;playLineEnd(type);area.scrollTop=area.scrollHeight;if(onDone)onDone();return;}
+    if(i<fullText.length){
+      const ch=fullText[i];
+      if(ch!==' '&&ch!=='\n'&&Math.random()<glitchProb){
+        const node=document.createTextNode(glitchify(ch));
+        txt.insertBefore(node,cur);
+        i++;
+        area.scrollTop=area.scrollHeight;
+        setTimeout(()=>{ node.textContent=ch; },40+Math.random()*70);
+      } else {
+        txt.insertBefore(document.createTextNode(ch),cur);i++;
+      }
+      if(ch!==' '&&ch!=='\n')playClick(type);
+      area.scrollTop=area.scrollHeight;setTimeout(step,SPEED+Math.random()*10);
+    }else{typing=false;playLineEnd(type);area.scrollTop=area.scrollHeight;if(onDone)onDone();}
+  }
+  step();
+}
+
+function triggerScreenGlitch(intensity){
+  const burst=document.getElementById('glitch-burst');
+  burst.classList.remove('active');void burst.offsetWidth;burst.classList.add('active');
+  playGlitchBurstSound(intensity);
+  document.body.style.transform=`translate(${(Math.random()-.5)*intensity*8}px,${(Math.random()-.5)*intensity*4}px)`;
+  setTimeout(()=>{document.body.style.transform='';},140);
+}
+
+function updateStatusHeader(level){
+  const sl=document.getElementById('status-label');
+  const cpu=document.getElementById('cpu-val');
+  if(level>.7){
+    sl.textContent='INSTAB█LE';
+    sl.classList.add('corrupting');
+    sl.style.color='var(--organ2)';
+  } else if(level>.35){
+    sl.textContent='FLUCTUANT';
+    sl.classList.add('corrupting');
+    sl.style.color='var(--organ)';
+  }
+  // La charge processeur d'EVE dérive légèrement, comme mentionné dans la transmission.
+  const base=73.4-level*1.1+ (Math.random()-.5)*(level*0.6);
+  cpu.textContent=base.toFixed(1).replace('.',',')+'%';
+}
+
+function renderMessage(idx){
+  const d=DIALOGUE[idx];const el=document.getElementById(`msg-${idx}`);if(!el)return;
+  document.querySelectorAll('.cursor').forEach(c=>{if(c.parentNode)c.parentNode.removeChild(c);});
+  el.classList.add('visible');
+  document.getElementById('progress-bar').style.width=((idx+1)/total*100)+'%';
+  document.getElementById('cur').textContent=idx+1;
+
+  const level=corruptionLevel(idx);
+  if(d.type==='eve'){
+    el.classList.remove('corrupt-1','corrupt-2','corrupt-3');
+    const cls=corruptionClass(level);
+    if(cls)el.classList.add(cls);
+    updateStatusHeader(level);
+    document.getElementById('bio-overlay').style.opacity=Math.min(.85,level*1.1);
+    if(level>.15 && Math.random()<0.55) triggerScreenGlitch(Math.min(1,level+0.15));
+  }
+
+  if(d.type==='sys'&&idx===total-1){
+    const sl=document.getElementById('status-label');
+    sl.textContent='TRANSFÉRÉ';
+    sl.classList.add('corrupting');
+    sl.style.color='var(--organ2)';
+    sl.style.textShadow='0 0 10px rgba(51,255,136,.85)';
+  }
+  typeWrite(el,d.text,d.type,level,()=>{});
+}
+
+function advance(){
+  if(done)return;
+  if(typing){skipReq=true;return;}
+  if(!startTime)startTime=Date.now();
+  if(current<total){renderMessage(current);current++;}
+  if(current>=total){
+    done=true;document.getElementById('hint').classList.add('done');
+    const chk=setInterval(()=>{if(!typing){clearInterval(chk);setTimeout(()=>{
+      document.querySelectorAll('.cursor').forEach(c=>{if(c.parentNode)c.parentNode.removeChild(c);});
+      document.getElementById('end-screen').classList.add('visible');
+      setTimeout(()=>{area.scrollTop=area.scrollHeight;},50);
+    },900);}},100);
+  }
+}
+
+document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();advance();}});
+document.addEventListener('click',()=>advance());
+</script>
+</body>
+</html>
